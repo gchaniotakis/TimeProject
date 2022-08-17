@@ -9,64 +9,57 @@ using Newtonsoft.Json;
 namespace TimeProject {
     class Program {
         static void Main(string[] args) {
+            
             Console.WriteLine("Hello there!");
 
             Thread.Sleep(5000);
 
-            Console.WriteLine("Now begin calculating...");
-            var min = DateTime.MinValue;
-            var max = DateTime.MaxValue;
+            Console.WriteLine("Looking for existing data file...");
+            bool dataFileExists = SearchForDataFile();
 
-            var daysOfWeek = new List<Dto>();
-            var dayOfWeekAndDayOfMonth = new List<Dto>();
-            var dayOfWeekMonthAndDayOfMonth = new List<Dto>();
-            var sw = new Stopwatch();
-            sw.Start();
-            for (DateTime i = min; i < max; i = i.AddDays(1)) {
-                Console.WriteLine($"Now processing {i: dd/MM/yyyy}");
-                
-                var year = i.Year;
-
-                var dayOfWeek = i.DayOfWeek.ToString();
-                Upsert(dayOfWeek, daysOfWeek, year);
-
-                var dayOfMonth = $"{dayOfWeek}, {i.Day}";
-                Upsert(dayOfMonth, dayOfWeekAndDayOfMonth, year);
-
-                var month = dayOfMonth + $"/{i.Month}";
-                Upsert(month, dayOfWeekMonthAndDayOfMonth, year);
-
-                if(i.Day == max.Day && i.Month == max.Month && i.Year == max.Year) {
-                    break;
+            //no data file found, the user must choose either to calculate or quit the program.
+            if (!dataFileExists) {
+                Console.WriteLine("No data file found!");
+                Thread.Sleep(3000);
+                bool attempt = false;
+                //loop for invalid syntax.
+                while (!attempt) {
+                    Console.WriteLine("Do you want to calculate? (Y/N)");
+                    string command = Console.ReadLine();
+                    attempt = HandleYNCommands(command, DateTimeCalculator.CalculateDateTimeStats);
                 }
-            }
 
-            sw.Stop();
-            Console.WriteLine($"Finished Processing all dates in {sw.ElapsedTime()}");
-            
-            dayOfWeekAndDayOfMonth.ForEach(x => x.Calculate());
-            dayOfWeekMonthAndDayOfMonth.ForEach(x => x.Calculate());
 
-            var conc = new ConcentratedDto {
-                Range = $"{min: dd/MM/yyyy} - {max: dd/MM/yyyy}",
-                TotalDays = (max - min).TotalDays,
-                DaysOfWeek = daysOfWeek.Select(x => x.ToString()),
-                DaysOfWeekAndDaysOfMonth = dayOfWeekAndDayOfMonth.Select(x => x.ToString()),
-                DaysOfWeekDaysOfMonthAndMonth = dayOfWeekMonthAndDayOfMonth.Select(x => x.ToString())
-            };
-
-            File.WriteAllText($"{Directory.GetCurrentDirectory()}\\data.json", JsonConvert.SerializeObject(conc));
+                //search again for data file (if the user typed Y then it should be there, if not the program must shut down.
+                dataFileExists = SearchForDataFile();
+                if (!dataFileExists) {
+                    Console.WriteLine("There is nothing left to do without data!!");
+                    Thread.Sleep(2000);
+                    Console.WriteLine("Press any button to close...");
+                    Console.Read();
+                }
+            }            
         }
 
-        static void Upsert(string tag, List<Dto> collection, int year) {
-            var found = collection.FirstOrDefault(x => x.Tag == tag);
-            if(found == null) {
-                collection.Add(new Dto(tag, 1, year));
-            } else {
-                found.Count += 1;
-                found.Years.Add(year);
-                found.Years = found.Years.Distinct().ToList();
+        static bool HandleYNCommands(string command, Action<DateTime?, DateTime?> action, DateTime? begin = null, DateTime? end = null) {
+            switch (command) {
+                case "y":
+                case "Y":
+                    action(begin, end);
+                    Console.WriteLine("Calculation completed!");
+                    Thread.Sleep(1000);                    
+                    return true;
+                case "n":
+                case "N":
+                    return true;
+                default:
+                    Console.WriteLine("Incorrect Syntax");
+                    return false;
             }
+        }
+
+        static bool SearchForDataFile() {
+            return Directory.GetFiles(Directory.GetCurrentDirectory()).Where(x => x.Contains(DateTimeCalculator.FileName)).Any();
         }
     }
 }
