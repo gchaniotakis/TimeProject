@@ -55,7 +55,7 @@ namespace TimeProject {
                 DaysOfWeekDaysOfMonthAndMonth = dayOfWeekMonthAndDayOfMonth.Select(x => x.ToString())
             };
 
-            File.WriteAllText("C:\\temp\\timeproject.json", JsonConvert.SerializeObject(conc));
+            File.WriteAllText($"{Directory.GetCurrentDirectory()}\\data.json", JsonConvert.SerializeObject(conc));
         }
 
         static void Upsert(string tag, List<Dto> collection, int year) {

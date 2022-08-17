@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Newtonsoft.Json;
 
 namespace TimeProject {
     public class Dto {
@@ -42,7 +43,7 @@ namespace TimeProject {
         }
 
         public override string ToString() {
-            return $"{Tag}: {nameof(Count)}: {Count}, {nameof(Years)}: {string.Join(',',Years)}, {nameof(Past)}: {Past}, {nameof(Future)}: {Future}, {nameof(IsPresent)}: {IsPresent}";
+            return JsonConvert.SerializeObject(this);
         }
     }
 
